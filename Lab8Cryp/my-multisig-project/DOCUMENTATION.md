@@ -1,117 +1,117 @@
-# Lab 8: Multi-Signature Wallet — Documentation and Analysis
+# Lab 8
 
-## 1. Архитектура контракта и механизм мультиподписного подтверждения
+## 1. Contract Architecture and Multi-Signature Confirmation Mechanism
 
-### Общая архитектура
+### Overall Architecture
 
-Контракт `MultiSigWallet` реализует **мультиподписный кошелек** — смарт-контракт, который требует подтверждения от нескольких владельцев (owners) для выполнения любой транзакции. Это повышает безопасность, исключая единую точку отказа (single point of failure).
+The `MultiSigWallet` contract implements a **multi-signature wallet** — a smart contract that requires confirmations from multiple owners to execute any transaction. This enhances security by eliminating a single point of failure.
 
-### Структуры данных (Data Structures)
+### Data Structures
 
 ```solidity
-// Массив адресов владельцев
+// Array of owner addresses
 address[] public owners;
 
-// Проверка: является ли адрес владельцем
+// Check: whether an address is an owner
 mapping(address => bool) public isOwner;
 
-// Количество подтверждений, необходимых для выполнения транзакции
+// Number of confirmations required for execution
 uint public numConfirmationsRequired;
 
-// Структура транзакции
+// Transaction structure
 struct Transaction {
-    address to;          // Куда отправляем (адрес)
-    uint value;         // Сколько ETH отправляем
-    bytes data;         // Данные для вызова (для токенов/контрактов)
-    bool executed;      // Выполнена ли уже
-    uint numConfirmations; // Сколько подтверждений получено
+    address to;          // Where to send (address)
+    uint value;         // How much ETH to send
+    bytes data;         // Data for external calls (for tokens/contracts)
+    bool executed;      // Whether already executed
+    uint numConfirmations; // How many confirmations received
 }
 
-// Массив всех транзакций
+// Array of all transactions
 Transaction[] public transactions;
 
-// Вложенная мапа: какая транзакция подтверждена каким владельцем
+// Nested mapping: which transaction confirmed by which owner
 mapping(uint => mapping(address => bool)) public isConfirmed;
 ```
 
-### Механизм мультиподписного подтверждения
+### Multi-Signature Confirmation Mechanism
 
-Процесс выполнения транзакции состоит из 4 шагов:
+The transaction execution process consists of 4 steps:
 
-#### Шаг 1: Предложение транзакции (Submit)
-Любой владелец может предложить транзакцию:
+#### Step 1: Transaction Submission (Submit)
+Any owner can propose a transaction:
 ```solidity
 function submitTransaction(address _to, uint _value, bytes memory _data) public onlyOwner
 ```
-- Создается новая транзакция в массиве `transactions`
-- Записывается адрес получателя, сумма ETH, дополнительные данные
-- Изначально: `executed = false`, `numConfirmations = 0`
-- Генерируется событие `SubmitTransaction`
+- A new transaction is created in the `transactions` array
+- Records recipient address, ETH amount, additional data
+- Initially: `executed = false`, `numConfirmations = 0`
+- Emits `SubmitTransaction` event
 
-#### Шаг 2: Подтверждение (Confirm)
-Владельцы подтверждают транзакцию:
+#### Step 2: Confirmation (Confirm)
+Owners confirm the transaction:
 ```solidity
 function confirmTransaction(uint _txIndex) public onlyOwner txExists(_txIndex) notExecuted(_txIndex) notConfirmed(_txIndex)
 ```
-- Увеличивается счетчик `numConfirmations` у транзакции
-- В мапе `isConfirmed` отмечается, что владелец подтвердил
-- Генерируется событие `ConfirmTransaction`
-- **Нельзя подтвердить дважды** (модификатор `notConfirmed`)
+- Increments `numConfirmations` counter in the transaction
+- Marks in `isConfirmed` mapping that the owner confirmed
+- Emits `ConfirmTransaction` event
+- **Cannot confirm twice** (modifier `notConfirmed`)
 
-#### Шаг 3: Выполнение (Execute)
-Когда набрано достаточно подтверждений:
+#### Step 3: Execution (Execute)
+When enough confirmations are collected:
 ```solidity
 function executeTransaction(uint _txIndex) public onlyOwner txExists(_txIndex) notExecuted(_txIndex)
 ```
-- Проверяется: `numConfirmations >= numConfirmationsRequired`
-- Выполняется внешний вызов: `(bool success, ) = transaction.to.call{value: transaction.value}(transaction.data);`
-- Если успешно: `executed = true`
-- Генерируется событие `ExecuteTransaction`
-- **Используется паттерн Checks-Effects-Interactions** (сначала меняем состояние, потом внешний вызов)
+- Checks: `numConfirmations >= numConfirmationsRequired`
+- Performs external call: `(bool success, ) = transaction.to.call{value: transaction.value}(transaction.data);`
+- If successful: `executed = true`
+- Emits `ExecuteTransaction` event
+- **Uses Checks-Effects-Interactions pattern** (state updated before external call)
 
-#### Шаг 4: Отзыв подтверждения (Revoke) — опционально
-Владелец может отозвать свое подтверждение до выполнения:
+#### Step 4: Confirmation Revocation (Revoke) — Optional
+An owner can revoke their confirmation before execution:
 ```solidity
 function revokeConfirmation(uint _txIndex) public onlyOwner txExists(_txIndex) notExecuted(_txIndex)
 ```
-- Уменьшается `numConfirmations`
-- Сбрасывается флаг в `isConfirmed`
-- Генерируется событие `RevokeConfirmation`
+- Decrements `numConfirmations`
+- Resets flag in `isConfirmed`
+- Emits `RevokeConfirmation` event
 
-### Диаграмма состояний транзакции
+### Transaction State Diagram
 
 ```
-[Предложена] --(Подтверждение)--> [Ожидает подтверждений] --(Порог достигнут)--> [Выполнена]
-                    ^                                                                 |
-                    |--(Отзыв подтверждения)---<--------------------------|
+[Submitted] --(Confirm)--> [Awaiting Confirmations] --(Threshold Reached)--> [Executed]
+                    ^                                                         |
+                    |--(Revoke Confirmation)---<--------------------------|
 ```
 
 ---
 
-## 2. Процесс развертывания и взаимодействия с контрактом
+## 2. Deployment Process and Contract Interaction
 
-### Развертывание (Deployment)
+### Deployment
 
-#### Предварительные требования:
-- Node.js установлен
-- Hardhat установлен локально в проекте
-- Локальный узел (node) запущен
+#### Prerequisites:
+- Node.js installed
+- Hardhat installed locally in the project
+- Local node (node) running
 
-#### Шаги развертывания:
+#### Deployment Steps:
 
-**1. Установка зависимостей:**
+**1. Install dependencies:**
 ```bash
 cd Lab8Cryp/my-multisig-project
 npm install --legacy-peer-deps
 ```
 
-**2. Компиляция контракта:**
+**2. Compile contract:**
 ```bash
 npx hardhat compile
 # Output: Compiled 1 Solidity file successfully (evm target: paris).
 ```
 
-**3. Запуск локального узла (Терминал 1):**
+**3. Start local node (Terminal 1):**
 ```bash
 npx hardhat node
 # Output:
@@ -121,20 +121,18 @@ npx hardhat node
 # Account #2: 0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC (10000 ETH)
 ```
 
-**4. Развертывание (Терминал 2):**
+**4. Deploy (Terminal 2):**
 ```javascript
 // scripts/deploy.js
 const provider = new ethers.JsonRpcProvider("http://127.0.0.1:8545");
 const accounts = await provider.send("eth_accounts", []);
 
-const owners = [accounts[0], accounts[1], accounts[2]]; // 3 владельца
-const numConfirmationsRequired = 2; // Требуется 2 подтверждения (2-of-3)
+const owners = [accounts[0], accounts[1], accounts[2]]; // 3 owners
+const numConfirmationsRequired = 2; // Requires 2 confirmations (2-of-3)
 
 const MultiSigWallet = await ethers.getContractFactory("MultiSigWallet", owner1);
 const multiSig = await MultiSigWallet.deploy(owners, numConfirmationsRequired);
 await multiSig.waitForDeployment();
-
-console.log("MultiSigWallet deployed to:", await multiSig.getAddress());
 ```
 
 ```bash
@@ -146,63 +144,63 @@ npx hardhat run scripts/deploy.js --network localhost
 # MultiSigWallet deployed to: 0x...
 ```
 
-### Взаимодействие с контрактом (Interaction)
+### Contract Interaction
 
-**Пример взаимодействия (scripts/interact.js):**
+**Interaction example (scripts/interact.js):**
 
 ```javascript
-// 1. Получаем информацию о контракте
+// 1. Get contract info
 console.log("Owners:", await multiSig.getOwners());
 console.log("Required confirmations:", await multiSig.numConfirmationsRequired());
 
-// 2. Владелец #1 предлагает транзакцию (отправить 1 ETH на адрес addr1)
+// 2. Owner #1 submits a transaction (send 1 ETH to addr1)
 await multiSig.connect(owner1).submitTransaction(addr1.address, ethers.parseEther("1"), "0x");
 console.log("Transaction submitted!");
 
-// 3. Владелец #1 подтверждает
+// 3. Owner #1 confirms
 await multiSig.connect(owner1).confirmTransaction(0);
 console.log("Owner 1 confirmed!");
 
-// 4. Владелец #2 подтверждает (порог достигнут)
+// 4. Owner #2 confirms (threshold reached)
 await multiSig.connect(owner2).confirmTransaction(0);
 console.log("Owner 2 confirmed! Threshold reached!");
 
-// 5. Выполнение транзакции
+// 5. Execute transaction
 await multiSig.connect(owner1).executeTransaction(0);
 console.log("Transaction executed! 1 ETH sent to addr1");
 
-// 6. Проверяем баланс получателя
+// 6. Check recipient balance
 console.log("Balance of addr1:", ethers.formatEther(await provider.getBalance(addr1.address)));
 ```
 
-**Прием депозита ETH в контракт:**
+**ETH deposit to contract:**
 ```javascript
-// Отправляем 2 ETH в мультисиг
+// Send 2 ETH to multisig
 await owner1.sendTransaction({
   to: multiSig.getAddress(),
   value: ethers.parseEther("2")
 });
-// Генерируется событие Deposit
+// Emits Deposit event
 ```
 
 ---
 
-## 3. Меры безопасности и потенциальные уязвимости, которые мы учли
+## 3. Security Measures and Potential Vulnerabilities Addressed
 
-### ✅ Реализованные меры безопасности
+###  Implemented Security Measures
 
-#### 1. Паттерн Checks-Effects-Interactions
-**Уязвимость:** Reentrancy (повторный вход)
-**Решение:** В функции `executeTransaction()` сначала обновляем состояние (`executed = true`), затем делаем внешний вызов:
+#### 1. Checks-Effects-Interactions Pattern
+**Vulnerability:** Reentrancy (repeated entry)
+**Solution:** In `executeTransaction()`, update state first (`executed = true`), then make external call:
 ```solidity
-transaction.executed = true; // Сначала меняем состояние
-(bool success, ) = transaction.to.call{value: transaction.value}(transaction.data); // Потом внешний вызов
+transaction.executed = true; // First update state
+(bool success, ) = transaction.to.call{value: transaction.value}(transaction.data); // Then external call
 require(success, "tx failed");
 ```
 
-#### 2. Правильный доступ к контракту (Access Control)
-**Уязвимость:** Несанкционированный доступ
-**Решение:** Модификатор `onlyOwner` проверяет, что вызывающий является владельцем:
+#### 2. Proper Access Control
+**Vulnerability:** Unauthorized access
+**Solution:** `onlyOwner` modifier checks that caller is an owner:
 ```solidity
 modifier onlyOwner() {
     require(isOwner[msg.sender], "not owner");
@@ -210,9 +208,9 @@ modifier onlyOwner() {
 }
 ```
 
-#### 3. Защита от дублирования подтверждений
-**Уязвимость:** Один владелец может подтвердить много раз, обманывая систему
-**Решение:** Модификатор `notConfirmed` и проверка в `confirmTransaction()`:
+#### 3. Protection Against Double Confirmation
+**Vulnerability:** One owner can confirm multiple times, cheating the system
+**Solution:** `notConfirmed` modifier and check in `confirmTransaction()`:
 ```solidity
 modifier notConfirmed(uint _txIndex) {
     require(!isConfirmed[_txIndex][msg.sender], "tx already confirmed");
@@ -220,9 +218,9 @@ modifier notConfirmed(uint _txIndex) {
 }
 ```
 
-#### 4. Проверка существования транзакции
-**Уязвимость:** Обращение к несуществующей транзакции (out-of-bounds)
-**Решение:** Модификатор `txExists`:
+#### 4. Transaction Existence Check
+**Vulnerability:** Accessing non-existent transaction (out-of-bounds)
+**Solution:** `txExists` modifier:
 ```solidity
 modifier txExists(uint _txIndex) {
     require(_txIndex < transactions.length, "tx does not exist");
@@ -230,9 +228,9 @@ modifier txExists(uint _txIndex) {
 }
 ```
 
-#### 5. Защита от повторного выполнения
-**Уязвимость:** Транзакция выполняется дважды (double-spending)
-**Решение:** Модификатор `notExecuted` и проверка:
+#### 5. Protection Against Re-execution
+**Vulnerability:** Transaction executed twice (double-spending)
+**Solution:** `notExecuted` modifier and check:
 ```solidity
 modifier notExecuted(uint _txIndex) {
     require(!transactions[_txIndex].executed, "tx already executed");
@@ -240,91 +238,91 @@ modifier notExecuted(uint _txIndex) {
 }
 ```
 
-#### 6. Корректная обработка ошибок
-**Уязвимость:** Транзакция выполняется, но сбой во внешнем вызове игнорируется
-**Решение:** Проверка `success` после `call`:
+#### 6. Proper Error Handling
+**Vulnerability:** Transaction executes but external call failure is ignored
+**Solution:** Check `success` after `call`:
 ```solidity
 (bool success, ) = transaction.to.call{value: transaction.value}(transaction.data);
 require(success, "tx failed");
 ```
 
-### ⚠️ Потенциальные уязвимости, требующие внимания в продакшене
+###  Potential Vulnerabilities Requiring Attention in Production
 
-#### 1. Отсутствие защиты от потери ETH (No receive function guard)
-- **Проблема:** Любой может отправить ETH на контракт
-- **Решение (дополнительно):** Добавить логику в `receive()` для отклонения нежелательных депозитов (или ограничить только владельцами)
+#### 1. No Protection Against ETH Loss (No receive function guard)
+- **Problem:** Anyone can send ETH to the contract
+- **Solution (additional):** Add logic in `receive()` to reject unwanted deposits (or limit to owners only)
 
-#### 2. Невозможность смены владельцев (Static ownership)
-- **Проблема:** В текущей версии нельзя добавить/удалить владельцев без деплоя нового контракта
-- **Решение (для продакшена):** Добавить функции `addOwner()`, `removeOwner()` с проверкой кворума
+#### 2. Static Ownership (No Owner Management)
+- **Problem:** In current version, owners cannot be added/removed without deploying new contract
+- **Solution (for production):** Add `addOwner()`, `removeOwner()` functions with quorum check
 
-#### 3. Фиксированный порог подтверждений
-- **Проблема:** Нельзя изменить `numConfirmationsRequired` после деплоя
-- **Решение:** Добавить `changeRequirement()` функцию
+#### 3. Fixed Confirmation Threshold
+- **Problem:** Cannot change `numConfirmationsRequired` after deployment
+- **Solution:** Add `changeRequirement()` function
 
-#### 4. Отсутствие таймаута для транзакций
-- **Проблема:** Транзакция может висеть в ожидании подтверждений бесконечно
-- **Решение:** Добавить `expiration` времени и функцию `refundExpired()`
+#### 4. Missing Transaction Timeout
+- **Problem:** Transaction can hang in pending state indefinitely
+- **Solution:** Add `expiration` time and `refundExpired()` function
 
-#### 5. Риск компрометации нескольких ключей
-- **Проблема:** Если скомпрометировано >= `numConfirmationsRequired` ключей, средства могут быть украдены
-- **Решение:** Использовать аппаратные кошельки (Ledger, Trezor) для хранения ключей владельцев
-
----
-
-## 4. Анализ назначения мультисиг-кошельков и их роль в повышении безопасности децентрализованных приложений
-
-### Что такое мультисиг-кошельки?
-
-Мультисиг-кошелек (multi-signature wallet) — это смарт-контракт, который требует **M из N** подписей (подтверждений) для авторизации транзакции. Например, 2-of-3 означает, что из 3 владельцев нужно минимум 2 подтверждения.
-
-### Роль в повышении безопасности DeFi и DAO
-
-#### 1. Защита казны DAO (Treasury Security)
-- **Проблема:** У DAO часто есть миллионы долларов в казне. Если один человек (даже директор) имеет единоличный контроль — это риск кражи, шантажа или потери ключей.
-- **Решение мультисига:** Требовать подписи от 3-of-5 членов совета DAO. Даже если 2 члена скомпрометированы, средства в безопасности.
-
-#### 2. Безопасное управление протоколами (Protocol Governance)
-- **Проблема:** DeFi протоколы (Uniswap, Aave и др.) имеют административные функции (обновление параметров, апгрейд контрактов).
-- **Решение:** Использовать мультисиг как "Timelock Contract" + "Admin Wallet". Любое изменение требует подтверждения от нескольких доверенных лиц.
-
-#### 3. Эскроу-сервисы (Escrow Services)
-- **Проблема:** При сделках P2P (например, покупка NFT за криптовалюту) нужен гарант.
-- **Решение:** Мультисиг 2-of-3: Покупатель, Продавец и Независимый Арбитр. Средства заморожены в контракте до подтверждения выполнения условий.
-
-#### 4. Личная безопасность (Personal Security)
-- **Проблема:** Если ваш приватный ключ от MetaMask скомпрометирован — средства украдены.
-- **Решение:** Использовать мультисиг 2-of-2 (или 2-of-3) с ключами на разных устройствах (телефон, ноутбук, аппаратный кошелек). Даже при краже одного устройства средства в безопасности.
-
-#### 5. Корпоративные платежи (Corporate Payments)
-- **Проблема:** В компаниях одобрение крупных транзакций требует подписи CEO и CFO.
-- **Решение:** Мультисиг автоматизирует этот процесс в блокчейне, делая его прозрачным и необратимым.
-
-### Сравнение с обычными кошельками
-
-| Характеристика | Обычный кошелек | Мультисиг-кошелек |
-|---------------|--------------------|----------------------|
-| Единая точка отказа | ✅ Да (один ключ = все потеряно) | ❌ Нет (нужно скомпрометировать несколько ключей) |
-| Безопасность | ⚠️ Низкая | ✅ Высокая |
-| Удобство | ✅ Просто | ⚠️ Требует координации между владельцами |
-| Подходит для | Личного использования | DAO, Компаний, Крупных хранилищ |
-
-### Почему это важно для будущего DeFi?
-
-1. **Децентрализация управления:** Мультисиги позволяют реализовать истинно децентрализованное управление (не одному человеку доверять миллионы)
-2. **Страховка от человеческого фактора:** Люди теряют ключи, забывают пароли, попадают под фишинг. Мультисиг минимизирует эти риски
-3. **Прозрачность:** Все подтверждения записываются в блокчейн, создавая аудиторский след
-4. **Стандарт индустрии:** Крупнейшие проекты (Gnosis Safe, BitGo, BitMEX) используют мультисиги для хранения средств пользователей
+#### 5. Risk of Multiple Key Compromise
+- **Problem:** If >= `numConfirmationsRequired` keys are compromised, funds can be stolen
+- **Solution:** Use hardware wallets (Ledger, Trezor) for key storage
 
 ---
 
-## Заключение
+## 4. Analysis of Multi-Sig Wallets' Purpose and Their Role in Enhancing DeFi Security
 
-В рамках этой лабораторной работы мы:
-1. ✅ Спроектировали и реализовали мультисиг-кошелек на Solidity
-2. ✅ Реализовали полный цикл транзакции: предложение → подтверждение → выполнение (с возможностью отзыва)
-3. ✅ Применили лучшие практики безопасности (checks-effects-interactions, access control, input validation)
-4. ✅ Написали тесты, покрывающие основные сценарии и краевые случаи
-5. ✅ Провели анализ безопасности и роли мультисигов в экосистеме DeFi
+### What are Multi-Signature Wallets?
 
-Мультисиг-кошельки остаются критически важным инструментом для обеспечения безопасности средств в децентрализованных приложениях и протоколах.
+A multi-signature wallet is a smart contract that requires **M-of-N** signatures (confirmations) to authorize a transaction. For example, 2-of-3 means that out of 3 owners, minimum 2 confirmations are needed.
+
+### Role in Enhancing DeFi and DAO Security
+
+#### 1. Treasury Security
+- **Problem:** DAOs often have millions of dollars in treasury. If one person (even director) has sole control — theft, extortion, or key loss risks.
+- **Multi-sig Solution:** Require signatures from 3-of-5 DAO council members. Even if 2 members are compromised, funds remain safe.
+
+#### 2. Protocol Governance
+- **Problem:** DeFi protocols (Uniswap, Aave, etc.) have administrative functions (parameter updates, contract upgrades).
+- **Multi-sig Solution:** Use multi-sig as "Timelock Contract" + "Admin Wallet". Any change requires confirmation from several trusted parties.
+
+#### 3. Escrow Services
+- **Problem:** In P2P transactions (e.g., buying NFT for crypto), a guarantee is needed.
+- **Multi-sig Solution:** 2-of-3 multi-sig: Buyer, Seller, and Independent Arbiter. Funds locked in contract until conditions are confirmed.
+
+#### 4. Personal Security
+- **Problem:** If your MetaMask private key is compromised — funds are stolen.
+- **Multi-sig Solution:** Use 2-of-2 (or 2-of-3) multi-sig with keys on different devices (phone, laptop, hardware wallet). Even if one device is stolen, funds are safe.
+
+#### 5. Corporate Payments
+- **Problem:** Companies require approval from CEO and CFO for large transactions.
+- **Multi-sig Solution:** Multi-sig automates this process on blockchain, making it transparent and irreversible.
+
+### Comparison with Regular Wallets
+
+| Characteristic | Regular Wallet | Multi-Sig Wallet |
+|---------------|-----------------|---------------|
+| Single Point of Failure |  Yes (one key = all lost) |  No (need to compromise multiple keys) |
+| Security |  Low |  High |
+| Convenience |  Simple |  Requires coordination between owners |
+| Suitable for | Personal use | DAOs, Companies, Large treasuries |
+
+### Why This Matters for DeFi Future?
+
+1. **Decentralized Governance:** Multi-sigs enable truly decentralized governance (not trusting one person with millions)
+2. **Human Factor Insurance:** People lose keys, forget passwords, fall for phishing. Multi-sigs minimize these risks
+3. **Transparency:** All confirmations are recorded on blockchain, creating audit trail
+4. **Industry Standard:** Major projects (Gnosis Safe, BitGo, BitMEX) use multi-sigs for user fund storage
+
+---
+
+## Conclusion
+
+In this lab work we:
+1.  Designed and implemented a multi-signature wallet in Solidity
+2.  Implemented full transaction lifecycle: submit → confirm → execute (with revoke capability)
+3.  Applied security best practices (checks-effects-interactions, access control, input validation)
+4.  Wrote tests covering main scenarios and edge cases
+5.  Conducted security analysis and examined multi-sig role in DeFi ecosystem
+
+Multi-signature wallets remain a critical tool for ensuring fund security in decentralized applications and protocols.
