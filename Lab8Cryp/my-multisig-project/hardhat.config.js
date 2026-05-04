@@ -1,11 +1,9 @@
-import "@nomicfoundation/hardhat-toolbox-mocha-ethers";
+const { ethers } = require("@nomicfoundation/hardhat-toolbox-mocha-ethers");
 
-const config = {
+module.exports = {
   solidity: "0.8.20",
   paths: {
     sources: "./contracts",
     tests: "./test",
   },
 };
-
-export default config;
