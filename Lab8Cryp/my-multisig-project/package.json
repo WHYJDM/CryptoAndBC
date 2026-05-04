@@ -1,8 +1,8 @@
 {
-  "name": "my-upgradeable-token",
+  "name": "my-multisig-project",
   "version": "1.0.0",
-  "description": "Upgradeable ERC20 token with proxy pattern",
-  "type": "module",
+  "description": "Multi-signature wallet contract",
+  "type": "commonjs",
   "scripts": {
     "test": "npx hardhat test",
     "compile": "npx hardhat compile"
@@ -12,10 +12,7 @@
   "license": "ISC",
   "devDependencies": {
     "@nomicfoundation/hardhat-ethers": "^3.0.7",
-    "@nomicfoundation/hardhat-ignition": "^3.1.1",
     "@nomicfoundation/hardhat-toolbox-mocha-ethers": "^3.0.3",
-    "@nomicfoundation/hardhat-verify": "^3.0.0",
-    "@openzeppelin/hardhat-upgrades": "^3.3.0",
     "@types/chai": "^5.2.3",
     "@types/mocha": "^10.0.10",
     "@types/node": "^22.19.17",
@@ -27,7 +24,6 @@
     "typescript": "~5.8.0"
   },
   "dependencies": {
-    "@openzeppelin/contracts": "^5.0.0",
-    "@openzeppelin/contracts-upgradeable": "^5.0.0"
+    "@openzeppelin/contracts": "^5.0.0"
   }
 }
