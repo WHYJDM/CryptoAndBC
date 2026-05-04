@@ -1,14 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.22;
 
-/**
- * @title Proxy
- * @dev Простой прокси-контракт, делегирующий вызовы к реализации через delegatecall.
- * Адрес реализации хранится в специальном слоте ERC-1967:
- * bytes32(uint256(keccak256("eip1967.proxy.implementation")) - 1)
- */
 contract Proxy {
-    // Слот ERC-1967 для адреса реализации
     bytes32 private constant IMPLEMENTATION_SLOT =
         bytes32(uint256(keccak256("eip1967.proxy.implementation")) - 1);
 
