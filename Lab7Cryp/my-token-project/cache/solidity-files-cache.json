@@ -2,8 +2,8 @@
   "_format": "hh-sol-cache-2",
   "files": {
     "C:\\Users\\gg\\CryptoAndBC\\Lab7Cryp\\my-token-project\\contracts\\ERC20V1.sol": {
-      "lastModificationDate": 1777897934761,
-      "contentHash": "0752f3ff3ac250f9c07a9a045fa10db4",
+      "lastModificationDate": 1777901019440,
+      "contentHash": "f19546790c80680ecc2369e93641fab4",
       "sourceName": "contracts/ERC20V1.sol",
       "solcConfig": {
         "version": "0.8.22",
@@ -699,8 +699,8 @@
       ]
     },
     "C:\\Users\\gg\\CryptoAndBC\\Lab7Cryp\\my-token-project\\contracts\\ERC20V2.sol": {
-      "lastModificationDate": 1777897934762,
-      "contentHash": "c4aa188b28d996198a4f5f430934cb38",
+      "lastModificationDate": 1777901019440,
+      "contentHash": "3cab5c5b73f77e02bad1cd053d25550b",
       "sourceName": "contracts/ERC20V2.sol",
       "solcConfig": {
         "version": "0.8.22",
