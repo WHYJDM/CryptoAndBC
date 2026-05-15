@@ -1,0 +1,11 @@
+{
+  "name": "Solar Paladin",
+  "description": "Game character token ID 7 from the ERC-1155 collection.",
+  "image": "ipfs://bafybeilab9characters/solar-paladin.png",
+  "attributes": [
+    { "trait_type": "color", "value": "Gold" },
+    { "trait_type": "speed", "value": 58 },
+    { "trait_type": "strength", "value": 82 },
+    { "trait_type": "rarity", "value": "Legendary" }
+  ]
+}

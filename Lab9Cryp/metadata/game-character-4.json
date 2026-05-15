@@ -1,0 +1,11 @@
+{
+  "name": "Terra Guardian",
+  "description": "Game character token ID 4 from the ERC-1155 collection.",
+  "image": "ipfs://bafybeilab9characters/terra-guardian.png",
+  "attributes": [
+    { "trait_type": "color", "value": "Green" },
+    { "trait_type": "speed", "value": 35 },
+    { "trait_type": "strength", "value": 90 },
+    { "trait_type": "rarity", "value": "Rare" }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "name": "Volt Rogue",
+  "description": "Game character token ID 5 from the ERC-1155 collection.",
+  "image": "ipfs://bafybeilab9characters/volt-rogue.png",
+  "attributes": [
+    { "trait_type": "color", "value": "Yellow" },
+    { "trait_type": "speed", "value": 88 },
+    { "trait_type": "strength", "value": 48 },
+    { "trait_type": "rarity", "value": "Epic" }
+  ]
+}

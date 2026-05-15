@@ -1,0 +1,11 @@
+{
+  "name": "Shadow Assassin",
+  "description": "Game character token ID 8 from the ERC-1155 collection.",
+  "image": "ipfs://bafybeilab9characters/shadow-assassin.png",
+  "attributes": [
+    { "trait_type": "color", "value": "Black" },
+    { "trait_type": "speed", "value": 94 },
+    { "trait_type": "strength", "value": 60 },
+    { "trait_type": "rarity", "value": "Legendary" }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "name": "lab9cryp-nft-contracts",
+  "version": "1.0.0",
+  "description": "ERC-721 soulbound visit card and ERC-1155 game character collection lab.",
+  "type": "commonjs",
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "deploy:local": "hardhat run scripts/deploy.js --network localhost",
+    "deploy:hardhat": "hardhat run scripts/deploy.js"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "hardhat": "^2.22.19"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "5.0.2",
+    "dotenv": "^16.4.7"
+  }
+}

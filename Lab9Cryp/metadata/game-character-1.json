@@ -1,0 +1,11 @@
+{
+  "name": "Astra Knight",
+  "description": "Game character token ID 1 from the ERC-1155 collection.",
+  "image": "ipfs://bafybeilab9characters/astra-knight.png",
+  "attributes": [
+    { "trait_type": "color", "value": "Silver" },
+    { "trait_type": "speed", "value": 45 },
+    { "trait_type": "strength", "value": 70 },
+    { "trait_type": "rarity", "value": "Common" }
+  ]
+}

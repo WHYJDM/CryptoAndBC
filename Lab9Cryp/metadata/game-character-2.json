@@ -1,0 +1,11 @@
+{
+  "name": "Blaze Archer",
+  "description": "Game character token ID 2 from the ERC-1155 collection.",
+  "image": "ipfs://bafybeilab9characters/blaze-archer.png",
+  "attributes": [
+    { "trait_type": "color", "value": "Red" },
+    { "trait_type": "speed", "value": 70 },
+    { "trait_type": "strength", "value": 55 },
+    { "trait_type": "rarity", "value": "Common" }
+  ]
+}

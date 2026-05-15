@@ -1,0 +1,23 @@
+{
+  "name": "Soulbound Student Visit Card #1",
+  "description": "Non-transferable ERC-721 visit card NFT for a student.",
+  "image": "ipfs://bafybeilab9visitcard/student-visit-card.png",
+  "attributes": [
+    {
+      "trait_type": "studentName",
+      "value": "Student Name"
+    },
+    {
+      "trait_type": "studentID",
+      "value": "STUDENT-001"
+    },
+    {
+      "trait_type": "course",
+      "value": "Cryptography and Blockchain"
+    },
+    {
+      "trait_type": "year",
+      "value": 2026
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "name": "Lunar Priest",
+  "description": "Game character token ID 6 from the ERC-1155 collection.",
+  "image": "ipfs://bafybeilab9characters/lunar-priest.png",
+  "attributes": [
+    { "trait_type": "color", "value": "White" },
+    { "trait_type": "speed", "value": 50 },
+    { "trait_type": "strength", "value": 42 },
+    { "trait_type": "rarity", "value": "Epic" }
+  ]
+}

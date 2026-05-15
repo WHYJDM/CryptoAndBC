@@ -1,0 +1,11 @@
+{
+  "name": "Crystal Golem",
+  "description": "Game character token ID 10 from the ERC-1155 collection.",
+  "image": "ipfs://bafybeilab9characters/crystal-golem.png",
+  "attributes": [
+    { "trait_type": "color", "value": "Purple" },
+    { "trait_type": "speed", "value": 28 },
+    { "trait_type": "strength", "value": 96 },
+    { "trait_type": "rarity", "value": "Epic" }
+  ]
+}

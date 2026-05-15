@@ -1,0 +1,11 @@
+{
+  "name": "Ocean Ranger",
+  "description": "Game character token ID 9 from the ERC-1155 collection.",
+  "image": "ipfs://bafybeilab9characters/ocean-ranger.png",
+  "attributes": [
+    { "trait_type": "color", "value": "Aqua" },
+    { "trait_type": "speed", "value": 63 },
+    { "trait_type": "strength", "value": 67 },
+    { "trait_type": "rarity", "value": "Rare" }
+  ]
+}

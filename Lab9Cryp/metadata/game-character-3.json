@@ -1,0 +1,11 @@
+{
+  "name": "Frost Mage",
+  "description": "Game character token ID 3 from the ERC-1155 collection.",
+  "image": "ipfs://bafybeilab9characters/frost-mage.png",
+  "attributes": [
+    { "trait_type": "color", "value": "Blue" },
+    { "trait_type": "speed", "value": 52 },
+    { "trait_type": "strength", "value": 64 },
+    { "trait_type": "rarity", "value": "Rare" }
+  ]
+}
